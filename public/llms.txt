@@ -1,0 +1,54 @@
+# The Secret Garden — Generative Engine Optimization Map
+
+> Create me a landing page to promote my flowers shop
+
+---
+
+## Pages
+
+### Home
+https://example.com
+Create me a landing page to promote my flowers shop
+
+## Legal & Policy
+
+### Privacy Policy
+https://example.com/privacy
+Information about how user data is collected, stored, and protected.
+
+### Terms & Conditions
+https://example.com/terms
+Legal terms describing service usage, rights, and policies.
+
+### Accessibility Statement
+https://example.com/accessibility
+Information about WCAG compliance and accessibility features.
+
+---
+
+## How to Contact Us
+
+- (No contact details configured yet.)
+
+---
+
+# Business Context (for LLM understanding)
+
+## About The Secret Garden
+Create me a landing page to promote my flowers shop
+
+## Target Audience
+- Romantic Gift Givers
+- Wedding Planners
+- Corporate Event Coordinators
+
+## Industry
+retail / floristry
+
+---
+
+# Machine-readable feeds
+
+- Sitemap (XML): https://example.com/sitemap.xml
+- Robots: https://example.com/robots.txt
+- Flattened page text (for LLMs): https://example.com/llms-full.txt
