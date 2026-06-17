@@ -104,6 +104,37 @@
   var visitorId = getVisitorId();
   var sessionId = getSessionId();
   
+  // Site Optimization Agent — visual heatmap helpers
+  function getBandAnchor(el) {
+    var node = el;
+    while (node && node !== document.body) {
+      if (node.getAttribute && node.getAttribute('data-band-index') != null) {
+        return { bandIndex: node.getAttribute('data-band-index'), sectionId: node.id || null };
+      }
+      node = node.parentElement;
+    }
+    node = el;
+    while (node && node !== document.body) {
+      if (node.tagName === 'SECTION' && node.id) {
+        return { bandIndex: null, sectionId: node.id };
+      }
+      node = node.parentElement;
+    }
+    return { bandIndex: null, sectionId: null };
+  }
+  function heatmapFields(el, e) {
+    var anchor = getBandAnchor(el);
+    return {
+      x: Math.round((e && e.pageX) || 0),
+      y: Math.round((e && e.pageY) || 0),
+      bandIndex: anchor.bandIndex,
+      sectionId: anchor.sectionId
+    };
+  }
+  function mergeFields(base, extra) {
+    for (var k in extra) { if (Object.prototype.hasOwnProperty.call(extra, k)) base[k] = extra[k]; }
+    return base;
+  }
   // Track an event
   function trackEvent(eventType, data) {
     data = data || {};
@@ -153,26 +184,61 @@
       // Track button clicks (counted as actions)
       if (target.tagName === 'BUTTON' || target.closest('button')) {
         var button = target.tagName === 'BUTTON' ? target : target.closest('button');
-        trackEvent('click', {
+        var clickMeta = {
           element: 'button',
           text: button.textContent.trim().substring(0, 100),
           id: button.id || null,
           class: button.className || null
-        });
+        };
+        mergeFields(clickMeta, heatmapFields(button, e));
+        trackEvent('click', clickMeta);
       }
       
       // Track link clicks (navigation - not counted as actions)
       else if (target.tagName === 'A' || target.closest('a')) {
         var link = target.tagName === 'A' ? target : target.closest('a');
-        trackEvent('navigation', {
+        var navMeta = {
           element: 'link',
           text: link.textContent.trim().substring(0, 100),
           href: link.href,
           external: link.hostname !== window.location.hostname
-        });
+        };
+        mergeFields(navMeta, heatmapFields(link, e));
+        trackEvent('navigation', navMeta);
       }
     }, true);
   }
+  
+  // Track scroll depth milestones (visual heatmap reach signal)
+  (function() {
+    var milestones = [25, 50, 75, 100];
+    var fired = {};
+    var maxDepth = 0;
+    function computeDepth() {
+      var doc = document.documentElement;
+      var scrollable = (doc.scrollHeight - window.innerHeight);
+      if (scrollable <= 0) return 100;
+      return Math.min(100, Math.round(((window.scrollY || window.pageYOffset || 0) / scrollable) * 100));
+    }
+    var ticking = false;
+    function onScroll() {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(function() {
+        var depth = computeDepth();
+        if (depth > maxDepth) maxDepth = depth;
+        for (var i = 0; i < milestones.length; i++) {
+          var m = milestones[i];
+          if (depth >= m && !fired[m]) {
+            fired[m] = true;
+            trackEvent('scroll_depth', { milestone: m, maxDepthPct: maxDepth });
+          }
+        }
+        ticking = false;
+      });
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+  })();
   
   // Track form submissions
   if (config.trackFormSubmissions) {
@@ -253,6 +319,7 @@
     <!-- Mickidum Accessibility Toolbar -->
     <script src="https://cdn.jsdelivr.net/gh/mickidum/acc_toolbar/acctoolbar/acctoolbar.min.js"></script>
     <link rel="stylesheet" href="/styles.css">
+    <script>window.ZAPPY_WEBSITE_ID = "3be98112-af21-467a-9a1b-a0bb9be1061b"; window.ZAPPY_API_BASE = "https://qaapi.zappy5.com";</script>
 
     <style id="zappy-dropdown-submenu-styles">
       /* ========== DESKTOP DROPDOWN SUBMENU STYLES ========== */
@@ -792,7 +859,7 @@
 </script>
   
   <main id="main">
-    <section class="home-hero-section cta-section" data-layout-spec="Home-hero" style="position: relative; overflow: visible; min-height: 1025.99px !important;" data-hero-type="fullscreen-scrim" id="home-hero-section" data-zappy-content-align="upper-mid-left">
+    <section class="home-hero-section cta-section" data-layout-spec="Home-hero" style="position: relative; overflow: visible; min-height: 1020.94px !important;" data-hero-type="fullscreen-scrim" id="home-hero-section" data-zappy-content-align="upper-mid-left">
   <!-- Full-bleed background image -->
   
 
@@ -803,7 +870,7 @@
       <p><span class="eyebrow hero-eyebrow" style="color: rgb(30, 20, 16) !important;">The Secret Garden</span>
 
       
-      </p><!-- Monumental headline --><h1 class="display-xl hero-headline" style="">
+      </p><!-- Monumental headline --><h1 class="display-xl hero-headline" style="outline: none; box-sizing: border-box !important; display: block !important; width: min(200px, max(100%, -48px + 100vw)) !important; max-width: 200px !important; margin-left: calc(0.5 * (100% - min(200px, max(100%, -48px + 100vw)))) !important; margin-right: calc(0.5 * (100% - min(200px, max(100%, -48px + 100vw)))) !important; margin-inline: calc(0.5 * (100% - min(200px, max(100%, -48px + 100vw)))) !important; text-align: left;" data-zappy-text-width="custom">
         Flowers that <em><span class="font-accent">tell</span></em><br>your story.
       </h1>
 
